@@ -170,7 +170,7 @@ export class HandoffService {
     const d = dests[index];
     if (!d) return null;
     const res = await openDestination(h, d, this.config);
-    this.store.addEvent(h.id, "opened", `${d.type} ${d.uri}${res.ok ? "" : " (failed: " + res.message + ")"}`, this.now());
+    this.store.addEvent(h.id, "opened", `${d.type} ${d.uri}${res.ok ? "" : " (failed: " + res.message.slice(0, 200) + ")"}`, this.now());
     this.log(`open #${h.id} → ${d.type} ${d.uri}: ${res.message}`);
     return res;
   }

@@ -12,7 +12,9 @@
     "dist",
     "mac",
     "scripts",
-    "README.md"
+    "claude-code",
+    "README.md",
+    "LICENSE"
   ],
   "engines": {
     "node": ">=22.13.0"
@@ -34,5 +36,17 @@
     "tsx": "^4.23.13",
     "typescript": "^5.9.3",
     "vitest": "^2.1.9"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/davidsparrow/reminder-router.git"
+  },
+  "keywords": [
+    "reminders",
+    "handoff",
+    "claude-code",
+    "developer-tools",
+    "macos",
+    "attention"
+  ]
 }
