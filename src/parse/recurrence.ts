@@ -109,7 +109,7 @@ export function parseEvery(input: string, opts: { morningHour?: number; now?: Da
   const hadEvery = /^every\b/.test(rest) || /\bevery\b/.test(rest);
 
   // --- minutes / hours -----------------------------------------------------
-  let m: RegExpMatchArray | null;
+  let m: RegExpMatchArray | null = null;
   if (hadEvery && (m = body.match(/^(\d+|[a-z]+)?\s*(minutes?|mins?)$/))) {
     const n = m[1] ? numberWord(m[1]) ?? 1 : 1;
     return { recurrence: { freq: "minutely", interval: n, hour, minute }, label: n === 1 ? "every minute" : `every ${n} minutes` };

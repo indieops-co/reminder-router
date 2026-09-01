@@ -15,8 +15,11 @@ export type DestinationType =
 
 export interface Destination {
   type: DestinationType;
+  /** URL, directory, file[:line], or custom URI. For "claude"/"terminal" this is the working directory. */
   uri: string;
   label?: string;
+  /** Optional shell command to run for "terminal" destinations. */
+  command?: string;
 }
 
 export type AgentType = "claude" | "cursor" | "codex" | "gemini" | "copilot" | "other" | null;

@@ -390,10 +390,10 @@ export class Store {
   }
 
   /** Move a recurring handoff to its next occurrence after `now`. */
-  advance(h: Handoff, now = new Date(), because: "completed" | "dismissed" | "advanced" = "advanced"): Handoff {
+  advance(h: Handoff, now = new Date(), because: "completed" | "dismissed" | "advanced" = "advanced", to?: Date): Handoff {
     if (!h.recurrence) return h;
     const anchor = new Date(h.created_at);
-    const next = nextOccurrence(h.recurrence, now, anchor);
+    const next = to ?? nextOccurrence(h.recurrence, now, anchor);
     this.db
       .prepare(
         `UPDATE handoffs SET status = 'scheduled', trigger_at = ?, snoozed_until = NULL, fired_at = NULL,

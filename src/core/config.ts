@@ -25,6 +25,12 @@ export interface Config {
   quietEnd: string;
   /** IANA timezone; empty = system timezone. */
   timezone: string;
+  /** "auto" | "swift" | "terminal-notifier" | "osascript" | "log" */
+  notifier: string;
+  /** Path to the HandoffNotify.app bundle (Swift helper). Empty = ~/.handoff/bin/HandoffNotify.app */
+  notifierApp: string;
+  /** Play the default notification sound. */
+  sound: boolean;
 }
 
 export const DEFAULT_CONFIG: Config = {
@@ -41,6 +47,9 @@ export const DEFAULT_CONFIG: Config = {
   quietStart: "",
   quietEnd: "",
   timezone: "",
+  notifier: "auto",
+  notifierApp: "",
+  sound: true,
 };
 
 let cached: Config | null = null;
