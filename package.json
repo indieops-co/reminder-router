@@ -1,0 +1,38 @@
+{
+  "name": "reminder-router",
+  "version": "0.1.0",
+  "description": "Reminders that take you back to the work. Context-aware handoffs for AI-assisted coding.",
+  "type": "module",
+  "license": "MIT",
+  "bin": {
+    "handoff": "./bin/handoff.js"
+  },
+  "files": [
+    "bin",
+    "dist",
+    "mac",
+    "scripts",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsx src/cli/main.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "prepare": "npm run build"
+  },
+  "dependencies": {
+    "chrono-node": "^2.10.1",
+    "commander": "^12.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.1",
+    "tsx": "^4.23.13",
+    "typescript": "^5.9.3",
+    "vitest": "^2.1.9"
+  }
+}
