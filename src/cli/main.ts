@@ -104,6 +104,7 @@ program
   .option("--no-capture", "don't capture the current directory / git info")
   .option("--no-notify", "silent: track it, don't notify")
   .option("--source <source>", "who created it: cli | claude | extension | api | mcp", "cli")
+  .option("--session <id>", "originating agent session id (Claude Code: ${CLAUDE_SESSION_ID}); enables Resume in Claude → claude --resume")
   .action(async (titleWords: string[], opts) => {
     const cfg = loadConfig();
     let title = titleWords.join(" ").trim();
@@ -129,6 +130,7 @@ program
       agent: opts.agent as AgentType,
       notify: opts.notify,
       createdBy: opts.source,
+      sourceSessionId: opts.session ?? process.env.CLAUDE_SESSION_ID ?? undefined,
       destinations: [],
     };
 
@@ -579,6 +581,24 @@ program
     } catch (err) {
       fail((err as Error).message);
     }
+  });
+
+program
+  .command("mcp")
+  .description("Run the MCP server over stdio (for Claude Code: claude mcp add handoff -- handoff mcp)")
+  .action(async () => {
+    const { runMcpStdio } = await import("../mcp/server.js");
+    await runMcpStdio();
+    await new Promise(() => undefined);
+  });
+
+const hook = program.command("hook").description("Claude Code hook handlers (read hook JSON on stdin)");
+hook
+  .command("session-start")
+  .description("Emit open/due handoffs for the current project as session context")
+  .action(async () => {
+    const { runSessionStartHook } = await import("../mcp/hooks.js");
+    runSessionStartHook();
   });
 
 program

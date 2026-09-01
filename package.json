@@ -1,6 +1,6 @@
 {
   "name": "reminder-router",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Reminders that take you back to the work. Context-aware handoffs for AI-assisted coding.",
   "type": "module",
   "license": "MIT",
@@ -13,6 +13,8 @@
     "mac",
     "scripts",
     "claude-code",
+    "claude-plugin",
+    ".claude-plugin",
     "README.md",
     "LICENSE"
   ],
@@ -28,8 +30,10 @@
     "prepare": "npm run build"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
     "chrono-node": "^2.10.1",
-    "commander": "^12.1.0"
+    "commander": "^12.1.0",
+    "zod": "^4.5.4"
   },
   "devDependencies": {
     "@types/node": "^22.20.1",

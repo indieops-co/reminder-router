@@ -27,12 +27,12 @@ else
   echo "▸ swiftc not found — skipping the notification helper (install Xcode CLT: xcode-select --install, then: handoff build-notifier)"
 fi
 
-if [ -d "$HOME/.claude" ]; then
-  mkdir -p "$HOME/.claude/commands"
-  if [ ! -f "$HOME/.claude/commands/remind.md" ]; then
-    cp claude-code/remind.md "$HOME/.claude/commands/remind.md"
-    echo "▸ installed /remind for Claude Code (~/.claude/commands/remind.md)"
-  fi
+if command -v claude >/dev/null 2>&1; then
+  echo
+  echo "▸ Claude Code found. Install the plugin from inside Claude Code:"
+  echo "    /plugin marketplace add davidsparrow/reminder-router"
+  echo "    /plugin install reminder-router@reminder-router"
+  echo "  (or try it without installing:  claude --plugin-dir $(pwd)/claude-plugin)"
 fi
 
 echo "▸ sending a test notification"

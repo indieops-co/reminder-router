@@ -67,13 +67,17 @@ export async function openDestination(h: Handoff, d: Destination, cfg: Config = 
       case "claude": {
         const dir = expandHome(d.uri && !d.uri.startsWith("claude") ? d.uri : h.repo_path ?? h.workspace_path ?? os.homedir());
         if (h.resume_prompt) await copyToClipboard(h.resume_prompt);
-        await openTerminal(dir, cfg.claudeCommand, cfg);
+        // If the handoff came from a Claude Code session, resume that exact session
+        // (full conversation context) instead of starting cold.
+        const resumable = cfg.claudeResumeSession && h.source_session_id && /^[0-9a-f-]{8,}$/i.test(h.source_session_id);
+        const cmd = resumable ? `${cfg.claudeCommand} --resume ${h.source_session_id}` : cfg.claudeCommand;
+        await openTerminal(dir, cmd, cfg);
         return {
           ok: true,
           destination: d,
-          message: h.resume_prompt
-            ? `Launched ${cfg.claudeCommand} in ${dir}. Resume prompt is on your clipboard — paste and press Enter.`
-            : `Launched ${cfg.claudeCommand} in ${dir}.`,
+          message:
+            `Launched ${cmd} in ${dir}.` +
+            (h.resume_prompt ? " Resume prompt is on your clipboard — paste and press Enter." : ""),
         };
       }
     }

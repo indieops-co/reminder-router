@@ -28,7 +28,7 @@ Tomorrow at 10:00 a native notification appears — *acme-auth · finish OAuth b
 - **`handoff` CLI** — add / list / now / show / open / done / snooze / skip / stop / edit / rm / resume / projects / daemon / config / parse.
 - **Local API** on `127.0.0.1:7391` — `POST /handoffs` from any agent, script, MCP server or editor extension. Nothing leaves the machine.
 - **Tiny inbox** at http://127.0.0.1:7391/ — Due now · Today · Tomorrow · Later · Recurring · Completed, with quick-add and action buttons.
-- **Claude Code `/remind`** — a slash command that has Claude generate the handoff context and resume prompt for you (see below).
+- **Claude Code plugin** — `/remind` (Claude writes the handoff context + resume prompt), `/handoffs` (list / resume / done / history), 13 MCP tools, and a session-start hook that surfaces what's waiting in the project. *Resume in Claude* reopens the originating session with `claude --resume`.
 
 ## Install
 
@@ -82,9 +82,18 @@ handoff daemon status | logs | restart | uninstall
 
 Add `--json` to any command for machine-readable output.
 
-## Claude Code: `/remind`
+## Claude Code
 
-Copy `claude-code/remind.md` to `~/.claude/commands/remind.md` (or the project's `.claude/commands/`). Then, mid-session:
+Reminder Router ships as a Claude Code **plugin** (`claude-plugin/`): two skills, an MCP server, and a session-start hook.
+
+```
+/plugin marketplace add davidsparrow/reminder-router
+/plugin install reminder-router@reminder-router
+```
+
+(or, while developing: `claude --plugin-dir ./claude-plugin`). The CLI must be installed first — the plugin runs `handoff mcp` and `handoff hook session-start`.
+
+**`/remind <when> [what]`** — mid-session:
 
 ```
 /remind tomorrow 10am
@@ -92,9 +101,15 @@ Copy `claude-code/remind.md` to `~/.claude/commands/remind.md` (or the project's
 /remind every monday 9am review dependency updates
 ```
 
-Claude writes a compact handoff — objective, current state, why we stopped, next action, relevant files, external dependency — plus a resume prompt, and creates it with `handoff add`. When it fires, `handoff open <id>` → *Resume in Claude* puts you back in the repo with that prompt on your clipboard; you press Enter.
+Claude writes a compact handoff — why we stopped, next action, context with file paths, a resume prompt — and calls `create_handoff`. The project, repo, branch **and the Claude session id** are captured automatically. When the reminder fires, **Resume in Claude** opens a terminal in the repo and runs `claude --resume <that session>` with the resume prompt on your clipboard, so you land back in the *same conversation*, not a cold start.
 
-`handoff resume <id>` prints the whole handoff as Markdown, so a fresh Claude session can be told: *"run `handoff resume 12` and continue."*
+**`/handoffs`** — `list`, `resume <id>`, `done <id>`, `snooze <id> 2h`, `history` (what happened last time we worked on this project — lightweight project memory).
+
+**Session start** — when Claude Code opens in a project that has open or due handoffs, the hook tells Claude about them, so *"what were we doing here?"* just works.
+
+**MCP tools** (usable from any MCP client — Cursor, Codex, your own agents — via `claude mcp add --scope user handoff -- handoff mcp` or the equivalent): `create_handoff` · `list_handoffs` · `due_now` · `get_handoff` · `resume_handoff` · `complete_handoff` · `snooze_handoff` · `dismiss_handoff` · `update_handoff` · `open_handoff` · `list_projects` · `project_history` · `parse_when`. Set `CLAUDE_SESSION_ID` / `CLAUDE_PROJECT_DIR` in the server env to get session capture and per-project defaults (the plugin does this for you).
+
+Prefer not to use plugins? `claude-code/remind.md` is the standalone slash command — copy it to `~/.claude/commands/`.
 
 ## Local API
 
@@ -146,8 +161,11 @@ src/api      server.ts (routes) · inbox.ts (HTML)
 src/notify   Swift helper bridge · terminal-notifier · osascript · log
 src/launch   destination launcher
 src/cli      commander commands · formatting · API client
+src/mcp      MCP server (13 tools) · Claude Code hook handlers
 mac/handoff-notify   main.swift · Info.plist · build.sh
-claude-code  /remind slash command
+claude-plugin        Claude Code plugin: skills/remind · skills/handoffs · hooks · .mcp.json
+.claude-plugin/marketplace.json   lets `/plugin marketplace add davidsparrow/reminder-router` find it
+claude-code  standalone /remind command (no plugin)
 ```
 
 The Handoff model already carries `source_session_id` / `source_terminal_id`, and projects carry compact numeric IDs, so V2's live `Session` objects (`018-A`, `018-B`) and the traffic-light monitor layer on without a schema rewrite.
@@ -165,9 +183,9 @@ On Linux the daemon runs with a log-only notifier, so the whole thing is testabl
 
 ## Roadmap (from the PRD)
 
-1. ~~Core reminder engine, CLI, local API~~ ← you are here
+1. ~~Core reminder engine, CLI, local API~~
 2. VS Code extension — workspace/file/terminal capture, command palette, `⌥⌘R`
-3. Claude Code plugin — MCP tools (`create_handoff`, `list_handoffs`, `complete_handoff`, `snooze_handoff`), automatic handoff generation
+3. ~~Claude Code plugin — MCP tools, `/remind`, `/handoffs`, session-start context, resume-by-session~~ ← you are here
 4. Menu-bar inbox (Swift) replacing the web inbox
 5. Global session monitor — live VS Code / terminal / agent sessions with green · orange · red attention states
 6. Event-driven handoffs — process finished, deploy completed, PR reviewed, "next time I open this project"

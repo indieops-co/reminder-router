@@ -27,7 +27,7 @@ handoff add "<title>" --at "<when>" \
   --next "<next action>" \
   --context "<context>" \
   --resume "<resume prompt>" \
-  --agent claude --source claude \
+  --agent claude --source claude --session "${CLAUDE_SESSION_ID}" \
   [--url <url> ...]
 ```
 

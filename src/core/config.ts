@@ -16,6 +16,8 @@ export interface Config {
   terminal: string;
   /** Command used to launch Claude Code inside a terminal. */
   claudeCommand: string;
+  /** When a handoff was created inside a Claude Code session, "Resume in Claude" runs `claude --resume <session>`. */
+  claudeResumeSession: boolean;
   /** Hour used for "morning" / "tomorrow" with no explicit time. */
   morningHour: number;
   afternoonHour: number;
@@ -41,6 +43,7 @@ export const DEFAULT_CONFIG: Config = {
   editor: "code",
   terminal: "auto",
   claudeCommand: "claude",
+  claudeResumeSession: true,
   morningHour: 9,
   afternoonHour: 14,
   eveningHour: 18,

@@ -1,0 +1,14 @@
+{
+  "name": "reminder-router",
+  "owner": { "name": "Robbie (IndieOps)", "url": "https://github.com/davidsparrow" },
+  "metadata": { "description": "Reminder Router — reminders that take you back to the work." },
+  "plugins": [
+    {
+      "name": "reminder-router",
+      "source": "./claude-plugin",
+      "description": "Context-aware handoff reminders for Claude Code: /remind, MCP tools, session-start context.",
+      "version": "0.2.0",
+      "category": "productivity"
+    }
+  ]
+}

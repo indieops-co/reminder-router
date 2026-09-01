@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "handoff": {
+      "type": "stdio",
+      "command": "handoff",
+      "args": ["mcp"],
+      "env": {
+        "CLAUDE_SESSION_ID": "${CLAUDE_SESSION_ID}",
+        "CLAUDE_PROJECT_DIR": "${CLAUDE_PROJECT_DIR}"
+      }
+    }
+  }
+}
