@@ -9,6 +9,7 @@ import { destinationLabel, inferDestination as inferDest } from "../core/destina
 import { formatRelative, parseWhen, splitTitleAndWhen } from "../parse/when.js";
 import { parseEvery } from "../parse/recurrence.js";
 import { inboxHtml } from "./inbox.js";
+import { captureContext } from "../core/git.js";
 
 export interface ApiOptions {
   port: number;
@@ -103,6 +104,14 @@ export function createApiServer(service: HandoffService, opts: ApiOptions): http
 
   route("POST", "/handoffs", ({ body }) => {
     const input = normalizeInput(body);
+    if (body?.capture && input.repoPath) {
+      // Editor extensions send a directory and ask us to fill in git root / branch / remote / name.
+      const ctx = captureContext(input.repoPath);
+      input.repoPath = ctx.repoRoot ?? input.repoPath;
+      input.gitBranch = input.gitBranch ?? ctx.branch ?? undefined;
+      input.project = input.project ?? ctx.projectName;
+      if (ctx.remote) store.upsertProject({ name: input.project, path: input.repoPath, repo: ctx.remote });
+    }
     if (!input.when && !input.every && !input.triggerAt && !input.recurrence) {
       // "check deployment in 30m" typed as one line
       const split = splitTitleAndWhen(input.title, { config: service.config });
@@ -152,6 +161,24 @@ export function createApiServer(service: HandoffService, opts: ApiOptions): http
     if (!p) throw new ApiError(404, "Project not found");
     return { ...p, code: projectCode(p.id), handoffs: store.list({ projectId: p.id }).map((h) => serializeHandoff(service, h)), history: store.history(p.id).map((h) => serializeHandoff(service, h)) };
   });
+  /** Resolve a directory to its project (if known) and that project's open handoffs — what an editor needs on activation. */
+  route("GET", "/context", ({ query }) => {
+    const dir = query.get("path");
+    if (!dir) throw new ApiError(400, "path is required");
+    const ctx = captureContext(dir);
+    const project = store.findProject(ctx.repoRoot ?? dir) ?? store.findProject(ctx.projectName);
+    const now = new Date();
+    return {
+      path: dir,
+      repoRoot: ctx.repoRoot,
+      branch: ctx.branch,
+      remote: ctx.remote,
+      projectName: ctx.projectName,
+      project: project ? { ...project, code: projectCode(project.id) } : null,
+      handoffs: project ? store.list({ projectId: project.id }).map((h) => serializeHandoff(service, h, now)) : [],
+      dueElsewhere: store.due().filter((h) => !project || h.project_id !== project.id).map((h) => serializeHandoff(service, h, now)),
+    };
+  });
   route("PATCH", "/projects/:id", ({ params, body }) => {
     const p = store.findProject(params.id);
     if (!p) throw new ApiError(404, "Project not found");
@@ -165,6 +192,14 @@ export function createApiServer(service: HandoffService, opts: ApiOptions): http
     if (rec) return { kind: "recurring", label: rec.label, recurrence: rec.recurrence };
     const one = parseWhen(text, { now, config: service.config });
     if (one) return { kind: "once", at: one.at.toISOString(), label: one.label };
+    // Maybe it's "title + trailing time" — tell the caller how we'd split it.
+    const split = splitTitleAndWhen(text, { now, config: service.config });
+    if (split.when) {
+      const rec2 = parseEvery(split.when, { now, morningHour: service.config.morningHour });
+      if (rec2) return { kind: "recurring", label: rec2.label, recurrence: rec2.recurrence, title: split.title, when: split.when };
+      const one2 = parseWhen(split.when, { now, config: service.config })!;
+      return { kind: "once", at: one2.at.toISOString(), label: one2.label, title: split.title, when: split.when };
+    }
     throw new ApiError(400, `Couldn't understand "${text}"`);
   });
 

@@ -28,6 +28,7 @@ Tomorrow at 10:00 a native notification appears — *acme-auth · finish OAuth b
 - **`handoff` CLI** — add / list / now / show / open / done / snooze / skip / stop / edit / rm / resume / projects / daemon / config / parse.
 - **Local API** on `127.0.0.1:7391` — `POST /handoffs` from any agent, script, MCP server or editor extension. Nothing leaves the machine.
 - **Tiny inbox** at http://127.0.0.1:7391/ — Due now · Today · Tomorrow · Later · Recurring · Completed, with quick-add and action buttons.
+- **VS Code extension** (`vscode-extension/`, also works in Cursor/Windsurf/VSCodium) — `⌥⌘R` composer with live time preview, capture of project / file:line / terminal cwd / git branch, a Handoffs section in the Explorer, status-bar due counter, in-editor due alerts with Open · Resume in Claude · Snooze · Done, and file destinations that open at the right line.
 - **Claude Code plugin** — `/remind` (Claude writes the handoff context + resume prompt), `/handoffs` (list / resume / done / history), 13 MCP tools, and a session-start hook that surfaces what's waiting in the project. *Resume in Claude* reopens the originating session with `claude --resume`.
 
 ## Install
@@ -81,6 +82,22 @@ handoff daemon status | logs | restart | uninstall
 `handoff add` captures the current directory, git root, branch and remote by default, and names the project from `package.json` / the remote / the folder. Use `--path` to point elsewhere, `--project` to name it yourself, `--no-capture` for reminders that have nothing to do with code.
 
 Add `--json` to any command for machine-readable output.
+
+## VS Code / Cursor
+
+```bash
+cd vscode-extension && npm install && npm run package     # → ../reminder-router-vscode.vsix
+code --install-extension ../reminder-router-vscode.vsix    # or cursor / windsurf / codium
+```
+
+(`scripts/install.sh` does this for you.) Then:
+
+- **`⌥⌘R` — Remind Me About This Project.** Type what to come back to; a trailing time is understood and previewed live (`check the deploy in 30m`). No time typed? Pick a preset or type one. The workspace folder, git root, branch and remote are captured; the project is named from `package.json` / the remote / the folder.
+- **Remind Me About Current File / Current Terminal / With a URL** — same flow with the file:line, the terminal's directory, or a URL as the primary destination.
+- **Handoffs** section in the Explorer: Due now · Today · Tomorrow · Later · Recurring · Completed, scoped to this workspace's project (due items from every project always show). Inline Open · Done · Snooze; right-click for Resume in Claude, Copy Resume Prompt, Delete. Click an item for the details card.
+- **Status bar**: `● 2 due` (red), `1 soon` (orange), quiet otherwise; click for *What Needs Me Now*.
+- **Landing**: when a notification's *Open Project* brings you into VS Code, the extension shows the due handoff with its next action and one-click *Resume in Claude* (a VS Code terminal running `claude --resume <session>` with the resume prompt on your clipboard).
+- If the daemon is down, creating still works through the CLI and the view offers a *Start daemon* button.
 
 ## Claude Code
 
@@ -162,6 +179,7 @@ src/notify   Swift helper bridge · terminal-notifier · osascript · log
 src/launch   destination launcher
 src/cli      commander commands · formatting · API client
 src/mcp      MCP server (13 tools) · Claude Code hook handlers
+vscode-extension     VS Code/Cursor extension (composer · capture · tree · status bar · alerts) → .vsix
 mac/handoff-notify   main.swift · Info.plist · build.sh
 claude-plugin        Claude Code plugin: skills/remind · skills/handoffs · hooks · .mcp.json
 .claude-plugin/marketplace.json   lets `/plugin marketplace add davidsparrow/reminder-router` find it
@@ -173,7 +191,9 @@ The Handoff model already carries `source_session_id` / `source_terminal_id`, an
 ## Development
 
 ```bash
-npm test            # vitest — parsers, store, scheduler, API
+npm test            # vitest — parsers, store, scheduler, API, MCP
+(cd vscode-extension && npm test)   # extension against a live daemon (HANDOFF_PORT=7399) with a mock vscode API
+(cd vscode-extension && npm run test:vscode)   # same, inside a real headless VS Code
 npm run typecheck
 npm run dev -- list # run the CLI from source
 HANDOFF_HOME=/tmp/hf HANDOFF_PORT=7399 npm run dev -- daemon run   # sandboxed daemon
@@ -184,8 +204,8 @@ On Linux the daemon runs with a log-only notifier, so the whole thing is testabl
 ## Roadmap (from the PRD)
 
 1. ~~Core reminder engine, CLI, local API~~
-2. VS Code extension — workspace/file/terminal capture, command palette, `⌥⌘R`
-3. ~~Claude Code plugin — MCP tools, `/remind`, `/handoffs`, session-start context, resume-by-session~~ ← you are here
+2. ~~VS Code extension — workspace/file/terminal capture, command palette, `⌥⌘R`, explorer view, status bar~~ ← you are here
+3. ~~Claude Code plugin — MCP tools, `/remind`, `/handoffs`, session-start context, resume-by-session~~
 4. Menu-bar inbox (Swift) replacing the web inbox
 5. Global session monitor — live VS Code / terminal / agent sessions with green · orange · red attention states
 6. Event-driven handoffs — process finished, deploy completed, PR reviewed, "next time I open this project"

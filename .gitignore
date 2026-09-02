@@ -4,3 +4,5 @@ dist/
 .DS_Store
 mac/handoff-notify/build/
 .handoff-test/
+*.vsix
+vscode-extension/.vscode-test/

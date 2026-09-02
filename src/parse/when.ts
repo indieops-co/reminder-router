@@ -99,6 +99,13 @@ export function parseWhen(input: string, opts: WhenOptions = {}): ParsedWhen | n
   const results = chrono.parse(s, now, { forwardDate: true });
   if (results.length === 0) return null;
   const r = results[0];
+  // The phrase must be *about* the time: whatever chrono didn't match may only be filler
+  // ("at", "in the", "morning", "please"). Otherwise "check the deploy in 45m" would parse
+  // as a bare time and lose its title.
+  const remainder = (s.slice(0, r.index) + " " + s.slice(r.index + r.text.length)).trim();
+  if (remainder && !/^(?:(?:at|on|by|in|the|this|next|morning|afternoon|evening|night|tonight|please|o'clock|around|about|sharp|[,.!])\s*)*$/.test(remainder)) {
+    return null;
+  }
   let at = r.date();
 
   const hourCertain = r.start.isCertain("hour");

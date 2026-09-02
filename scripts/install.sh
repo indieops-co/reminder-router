@@ -27,6 +27,13 @@ else
   echo "▸ swiftc not found — skipping the notification helper (install Xcode CLT: xcode-select --install, then: handoff build-notifier)"
 fi
 
+if command -v code >/dev/null 2>&1 || command -v cursor >/dev/null 2>&1; then
+  echo "▸ building the VS Code extension"
+  (cd vscode-extension && npm install --no-audit --no-fund >/dev/null 2>&1 && npm run package >/dev/null 2>&1) \
+    && { for ed in code cursor windsurf codium; do command -v "$ed" >/dev/null 2>&1 && "$ed" --install-extension reminder-router-vscode.vsix >/dev/null 2>&1 && echo "  installed into $ed"; done; } \
+    || echo "  (extension build failed — run: cd vscode-extension && npm install && npm run package)"
+fi
+
 if command -v claude >/dev/null 2>&1; then
   echo
   echo "▸ Claude Code found. Install the plugin from inside Claude Code:"
