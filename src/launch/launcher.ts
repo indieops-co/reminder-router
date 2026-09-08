@@ -8,6 +8,47 @@ import { loadConfig } from "../core/config.js";
 import type { Destination, Handoff } from "../core/types.js";
 import { expandHome } from "../core/paths.js";
 
+// ---------------------------------------------------------------- editor deep links
+
+const EXTENSION_ID = "indieops.reminder-router";
+/** URI scheme each editor CLI answers to, and where it keeps installed extensions. */
+const EDITOR_URI: Record<string, { scheme: string; extensions: string }> = {
+  code: { scheme: "vscode", extensions: ".vscode/extensions" },
+  "code-insiders": { scheme: "vscode-insiders", extensions: ".vscode-insiders/extensions" },
+  cursor: { scheme: "cursor", extensions: ".cursor/extensions" },
+  windsurf: { scheme: "windsurf", extensions: ".windsurf/extensions" },
+  codium: { scheme: "vscodium", extensions: ".vscode-oss/extensions" },
+};
+let extensionCheck: { editor: string; at: number; installed: boolean } | null = null;
+
+/** Is the Reminder Router extension installed for the configured editor? (cached for 30 s) */
+export function editorExtensionInstalled(cfg: Config): boolean {
+  const editor = cfg.editor || "code";
+  if (extensionCheck && extensionCheck.editor === editor && Date.now() - extensionCheck.at < 30_000) return extensionCheck.installed;
+  const info = EDITOR_URI[editor];
+  let installed = false;
+  if (info) {
+    try {
+      installed = fs.readdirSync(path.join(os.homedir(), info.extensions)).some((n) => n.startsWith(EXTENSION_ID + "-"));
+    } catch {
+      installed = false;
+    }
+  }
+  extensionCheck = { editor, at: Date.now(), installed };
+  return installed;
+}
+
+/**
+ * `vscode://indieops.reminder-router/handoff/12` — opened after "Open Project" so the editor
+ * extension shows the handoff card in the window that just came up. Null when the configured
+ * editor isn't a VS Code family member or the extension isn't installed for it.
+ */
+export function editorDeepLink(h: Pick<Handoff, "id">, cfg: Config): string | null {
+  const info = EDITOR_URI[cfg.editor || "code"];
+  if (!info || !editorExtensionInstalled(cfg)) return null;
+  return `${info.scheme}://${EXTENSION_ID}/handoff/${h.id}`;
+}
+
 const execFileP = promisify(execFile);
 
 export interface LaunchResult {
@@ -52,7 +93,13 @@ export async function openDestination(h: Handoff, d: Destination, cfg: Config = 
       case "path": {
         const dir = expandHome(d.uri);
         await openInEditor(dir, cfg);
-        return { ok: true, destination: d, message: `Opened ${dir} in ${cfg.editor}` };
+        // Let the editor extension land on the handoff card (the window needs a moment to exist).
+        const link = editorDeepLink(h, cfg);
+        if (link) {
+          await new Promise((r) => setTimeout(r, 1500));
+          await openUri(link).catch(() => undefined);
+        }
+        return { ok: true, destination: d, message: `Opened ${dir} in ${cfg.editor}${link ? " — the extension shows the handoff" : ""}` };
       }
       case "file": {
         const file = expandHome(d.uri);

@@ -31,4 +31,4 @@ codesign --force --sign - "$APP" >/dev/null 2>&1 || echo "warning: codesign fail
 
 echo "built $APP"
 echo "Now: handoff daemon restart   (then: handoff test-notify)"
-echo "Tip: System Settings › Notifications › Handoff › alert style \"Alerts\" keeps reminders on screen until you act."
+echo "Tip: System Settings › Notifications › Handoff › alert style \"Persistent\" (\"Alerts\" before macOS 26) keeps reminders on screen until you act."

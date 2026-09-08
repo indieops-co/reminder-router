@@ -50,7 +50,7 @@ export function activeTerminal(): { cwd: string | null; name: string } | null {
   const si = (t as any).shellIntegration;
   if (si?.cwd?.fsPath) cwd = si.cwd.fsPath;
   else {
-    const opts = t.creationOptions as vscode.TerminalOptions;
+    const opts = (t.creationOptions ?? {}) as vscode.TerminalOptions;
     if (typeof opts.cwd === "string") cwd = opts.cwd;
     else if (opts.cwd && typeof (opts.cwd as vscode.Uri).fsPath === "string") cwd = (opts.cwd as vscode.Uri).fsPath;
   }
@@ -70,4 +70,16 @@ export function capture(): Captured {
     terminalCwd: t?.cwd ?? null,
     terminalName: t?.name ?? null,
   };
+}
+
+/** The active editor's selection, trimmed to `max` characters — captured as handoff context. */
+export function selectedText(max = 300): { text: string; where: string } | null {
+  const ed = vscode.window.activeTextEditor;
+  if (!ed || ed.selection.isEmpty || ed.document.uri.scheme !== "file") return null;
+  const text = ed.document.getText(ed.selection).trim();
+  if (!text) return null;
+  const from = ed.selection.start.line + 1;
+  const to = ed.selection.end.line + 1;
+  const where = `${path.basename(ed.document.uri.fsPath)}:${from}${to !== from ? `-${to}` : ""}`;
+  return { text: text.length > max ? text.slice(0, max) + "…" : text, where };
 }

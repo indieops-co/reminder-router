@@ -4,7 +4,7 @@ import type { HandoffService } from "../daemon/service.js";
 import { HandoffError, type HandoffPatch } from "../core/store.js";
 import type { Handoff, NewHandoffInput } from "../core/types.js";
 import { parseId, projectCode } from "../core/ids.js";
-import { effectiveDestinations } from "../launch/launcher.js";
+import { effectiveDestinations, editorDeepLink } from "../launch/launcher.js";
 import { destinationLabel, inferDestination as inferDest } from "../core/destinations.js";
 import { formatRelative, parseWhen, splitTitleAndWhen } from "../parse/when.js";
 import { parseEvery } from "../parse/recurrence.js";
@@ -41,6 +41,8 @@ export function serializeHandoff(service: HandoffService, h: Handoff, now = new 
     code: `#${h.id}`,
     when_label: formatRelative(new Date(h.trigger_at), now),
     actions: effectiveDestinations(h).map((d, i) => ({ index: i, ...d, label: destinationLabel(d) })),
+    /** vscode://indieops.reminder-router/handoff/<id> when the editor extension is installed, else null. */
+    deep_link: editorDeepLink(h, service.config),
   };
 }
 

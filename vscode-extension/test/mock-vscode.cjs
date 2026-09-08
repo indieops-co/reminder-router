@@ -10,7 +10,7 @@ const log = [];
 const commands = new Map();
 const contexts = {};
 let workspaceRoot = process.cwd();
-let config = { port: Number(process.env.HANDOFF_PORT || 7399), cliPath: "handoff", notifyInEditor: true, showAllProjectsInTree: false, claudeCommand: "claude", pollSeconds: 30 };
+let config = { port: Number(process.env.HANDOFF_PORT || 7399), cliPath: "handoff", notifyInEditor: true, showAllProjectsInTree: false, captureSelection: true, claudeCommand: "claude", pollSeconds: 30 };
 let nextMessageAnswer = undefined;
 let nextInputs = [];
 const terminals = [];
@@ -20,12 +20,24 @@ class TreeItem { constructor(label, state) { this.label = label; this.collapsibl
 class ThemeIcon { constructor(id, color) { this.id = id; this.color = color; } }
 class ThemeColor { constructor(id) { this.id = id; } }
 class MarkdownString { constructor() { this.value = ""; } appendMarkdown(s) { this.value += s; return this; } }
-class Uri { constructor(fsPath) { this.fsPath = fsPath; this.scheme = "file"; } static file(p) { return new Uri(p); } static parse(s) { const u = new Uri(s); u.scheme = s.split(":")[0]; return u; } toString() { return this.fsPath; } }
+class Uri {
+  constructor(fsPath) { this.fsPath = fsPath; this.path = fsPath; this.scheme = "file"; this.authority = ""; this.query = ""; }
+  static file(p) { return new Uri(p); }
+  static parse(s) {
+    const u = new Uri(s);
+    const m = s.match(/^([a-z][a-z0-9+.-]*):\/\/([^/?#]*)([^?#]*)(?:\?([^#]*))?/i);
+    if (m) { u.scheme = m[1]; u.authority = m[2]; u.path = decodeURIComponent(m[3]); u.query = m[4] ?? ""; }
+    else { const m2 = s.match(/^([a-z][a-z0-9+.-]*):(.*)$/i); if (m2) { u.scheme = m2[1]; u.path = m2[2]; } }
+    return u;
+  }
+  toString() { return this.fsPath; }
+}
 class Range { constructor(a, b, c, d) { this.start = { line: a, character: b }; this.end = { line: c, character: d }; } }
 
 const statusItems = [];
 const vscode = {
   log, contexts, statusItems, terminals,
+  uriHandler: null,
   setWorkspace(root) { workspaceRoot = root; },
   answerNext(v) { nextMessageAnswer = v; },
   queueInputs(arr) { nextInputs = arr; },
@@ -38,6 +50,7 @@ const vscode = {
     registerCommand(id, fn) { commands.set(id, fn); return { dispose() { commands.delete(id); } }; },
     async executeCommand(id, ...args) {
       if (id === "setContext") { contexts[args[0]] = args[1]; return; }
+      if (id === "vscode.openFolder") { log.push(`[openFolder] ${args[0].fsPath}`); return; }
       const fn = commands.get(id);
       if (!fn) { log.push(`(no command ${id})`); return; }
       return fn(...args);
@@ -45,6 +58,7 @@ const vscode = {
     async getCommands() { return [...commands.keys()]; },
   },
   window: {
+    state: { focused: true },
     createOutputChannel: (name) => ({ name, appendLine: (s) => log.push(`[out] ${s}`), dispose() {} }),
     createTreeView: (id, opts) => ({ id, provider: opts.treeDataProvider, dispose() {} }),
     createStatusBarItem: () => { const it = { show() {}, hide() {}, dispose() {} }; statusItems.push(it); return it; },
@@ -53,20 +67,23 @@ const vscode = {
     showWarningMessage: async (msg, ...btns) => { log.push(`[warn] ${msg}`); const a = nextMessageAnswer; nextMessageAnswer = undefined; return a; },
     showErrorMessage: async (msg) => { log.push(`[error] ${msg}`); },
     showQuickPick: async (items, opts) => { log.push(`[quickpick] ${opts?.title ?? ""} (${items.length})`); const a = nextInputs.shift(); return a === undefined ? undefined : items.find((i) => i.label === a || i.label.includes(a)) ?? a; },
-    showInputBox: async (opts) => { log.push(`[input] ${opts?.title ?? ""}`); return nextInputs.shift(); },
+    // Returns the next queued input; with nothing queued, "accepts" a prefilled value (Enter on it).
+    showInputBox: async (opts) => { log.push(`[input] ${opts?.title ?? ""}`); return nextInputs.length ? nextInputs.shift() : opts?.value; },
     createInputBox() {
-      const box = { value: "", handlers: {}, show() { const v = nextInputs.shift(); if (v === undefined) return this.handlers.hide?.(); this.value = v; this.handlers.change?.(v); setTimeout(() => this.handlers.accept?.(), 400); }, hide() { this.handlers.hide?.(); }, dispose() {},
+      const box = { value: "", handlers: {}, show() { const v = nextInputs.length ? nextInputs.shift() : (this.value || undefined); if (v === undefined) return this.handlers.hide?.(); this.value = v; this.handlers.change?.(v); setTimeout(() => this.handlers.accept?.(), 900); }, hide() { this.handlers.hide?.(); }, dispose() {},
         onDidChangeValue(f) { this.handlers.change = f; }, onDidAccept(f) { this.handlers.accept = f; }, onDidHide(f) { this.handlers.hide = f; } };
       return box;
     },
     createQuickPick() {
-      const qp = { value: "", items: [], selectedItems: [], handlers: {}, show() { const v = nextInputs.shift(); if (v === undefined) return this.handlers.hide?.(); this.value = v; this.handlers.change?.(v); setTimeout(() => { this.selectedItems = this.items.filter((i) => i.when === v || i.description === v).slice(0, 1); this.handlers.accept?.(); }, 400); }, hide() { this.handlers.hide?.(); }, dispose() {},
+      const qp = { value: "", items: [], selectedItems: [], handlers: {}, show() { const v = nextInputs.shift(); if (v === undefined) return this.handlers.hide?.(); this.value = v; this.handlers.change?.(v); setTimeout(() => { this.selectedItems = this.items.filter((i) => i.when === v || i.description === v).slice(0, 1); this.handlers.accept?.(); }, 900); }, hide() { this.handlers.hide?.(); }, dispose() {},
         onDidChangeValue(f) { this.handlers.change = f; }, onDidAccept(f) { this.handlers.accept = f; }, onDidHide(f) { this.handlers.hide = f; } };
       return qp;
     },
-    createTerminal: (opts) => { const t = { name: opts.name, cwd: opts.cwd, sent: [], show() {}, sendText(s) { this.sent.push(s); } }; terminals.push(t); return t; },
+    createTerminal: (opts) => { const t = { name: opts.name, cwd: opts.cwd, creationOptions: opts, sent: [], show() {}, sendText(s) { this.sent.push(s); } }; terminals.push(t); return t; },
     showTextDocument: async (doc, opts) => { log.push(`[showdoc] ${doc.fileName} line ${opts?.selection?.start.line}`); },
+    registerUriHandler(h) { vscode.uriHandler = h; return { dispose() { vscode.uriHandler = null; } }; },
     onDidChangeActiveTextEditor: () => ({ dispose() {} }),
+    onDidChangeWindowState: () => ({ dispose() {} }),
     get activeTextEditor() { return undefined; },
     get activeTerminal() { return terminals[terminals.length - 1]; },
   },
@@ -77,7 +94,7 @@ const vscode = {
     onDidChangeConfiguration: () => ({ dispose() {} }),
     openTextDocument: async (p) => ({ fileName: p }),
   },
-  env: { clipboard: { text: "", async writeText(t) { this.text = t; } }, openExternal: async (uri) => { log.push(`[open] ${uri.fsPath}`); return true; } },
+  env: { uriScheme: "vscode", clipboard: { text: "", async writeText(t) { this.text = t; } }, openExternal: async (uri) => { log.push(`[open] ${uri.fsPath}`); return true; } },
   extensions: { getExtension: () => undefined },
 };
 

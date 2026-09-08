@@ -1,8 +1,8 @@
 {
   "name": "reminder-router",
-  "displayName": "Reminder Router \u2014 Handoffs",
-  "description": "Reminders that take you back to the work. Create a context-aware handoff for this project, file or terminal (\u2325\u2318R); see what's due; jump back with one click.",
-  "version": "0.2.0",
+  "displayName": "Reminder Router — Handoffs",
+  "description": "Reminders that take you back to the work. Create a context-aware handoff for this project, file or terminal (⌥⌘R); see what's due; jump back with one click.",
+  "version": "0.3.0",
   "publisher": "indieops",
   "license": "MIT",
   "repository": {
@@ -27,249 +27,99 @@
   "icon": "media/icon.png",
   "main": "./dist/extension.js",
   "activationEvents": [
-    "onStartupFinished"
+    "onStartupFinished",
+    "onUri"
   ],
   "contributes": {
     "commands": [
-      {
-        "command": "handoff.remindProject",
-        "title": "Remind Me About This Project",
-        "category": "Handoff",
-        "icon": "$(bell)"
-      },
-      {
-        "command": "handoff.remindFile",
-        "title": "Remind Me About Current File",
-        "category": "Handoff"
-      },
-      {
-        "command": "handoff.remindTerminal",
-        "title": "Remind Me About Current Terminal",
-        "category": "Handoff"
-      },
-      {
-        "command": "handoff.remindUrl",
-        "title": "Remind Me With a URL",
-        "category": "Handoff"
-      },
-      {
-        "command": "handoff.showDue",
-        "title": "What Needs Me Now",
-        "category": "Handoff"
-      },
-      {
-        "command": "handoff.refresh",
-        "title": "Refresh",
-        "category": "Handoff",
-        "icon": "$(refresh)"
-      },
-      {
-        "command": "handoff.openInbox",
-        "title": "Open Inbox (web)",
-        "category": "Handoff",
-        "icon": "$(link-external)"
-      },
-      {
-        "command": "handoff.open",
-        "title": "Open Destination",
-        "category": "Handoff",
-        "icon": "$(arrow-right)"
-      },
-      {
-        "command": "handoff.done",
-        "title": "Done",
-        "category": "Handoff",
-        "icon": "$(check)"
-      },
-      {
-        "command": "handoff.snooze",
-        "title": "Snooze\u2026",
-        "category": "Handoff",
-        "icon": "$(clock)"
-      },
-      {
-        "command": "handoff.resumeInClaude",
-        "title": "Resume in Claude",
-        "category": "Handoff",
-        "icon": "$(play)"
-      },
-      {
-        "command": "handoff.copyResumePrompt",
-        "title": "Copy Resume Prompt",
-        "category": "Handoff"
-      },
-      {
-        "command": "handoff.details",
-        "title": "Show Handoff",
-        "category": "Handoff"
-      },
-      {
-        "command": "handoff.delete",
-        "title": "Delete",
-        "category": "Handoff",
-        "icon": "$(trash)"
-      },
-      {
-        "command": "handoff.startDaemon",
-        "title": "Start the Reminder Daemon",
-        "category": "Handoff"
-      }
+      { "command": "handoff.remindProject", "title": "Remind Me About This Project", "category": "Handoff", "icon": "$(bell)" },
+      { "command": "handoff.remindFile", "title": "Remind Me About Current File", "category": "Handoff" },
+      { "command": "handoff.remindTerminal", "title": "Remind Me About Current Terminal", "category": "Handoff" },
+      { "command": "handoff.remindUrl", "title": "Remind Me With a URL", "category": "Handoff" },
+      { "command": "handoff.showDue", "title": "What Needs Me Now", "category": "Handoff" },
+      { "command": "handoff.search", "title": "Find Handoff…", "category": "Handoff", "icon": "$(search)" },
+      { "command": "handoff.reschedule", "title": "Reschedule…", "category": "Handoff", "icon": "$(calendar)" },
+      { "command": "handoff.edit", "title": "Edit…", "category": "Handoff", "icon": "$(edit)" },
+      { "command": "handoff.refresh", "title": "Refresh", "category": "Handoff", "icon": "$(refresh)" },
+      { "command": "handoff.openInbox", "title": "Open Inbox (web)", "category": "Handoff", "icon": "$(link-external)" },
+      { "command": "handoff.open", "title": "Open Destination", "category": "Handoff", "icon": "$(arrow-right)" },
+      { "command": "handoff.done", "title": "Done", "category": "Handoff", "icon": "$(check)" },
+      { "command": "handoff.snooze", "title": "Snooze…", "category": "Handoff", "icon": "$(clock)" },
+      { "command": "handoff.resumeInClaude", "title": "Resume in Claude", "category": "Handoff", "icon": "$(play)" },
+      { "command": "handoff.copyResumePrompt", "title": "Copy Resume Prompt", "category": "Handoff" },
+      { "command": "handoff.copyLink", "title": "Copy Link", "category": "Handoff", "icon": "$(link)" },
+      { "command": "handoff.details", "title": "Show Handoff", "category": "Handoff" },
+      { "command": "handoff.reopen", "title": "Reopen", "category": "Handoff", "icon": "$(debug-restart)" },
+      { "command": "handoff.stopRecurring", "title": "Stop Repeating", "category": "Handoff", "icon": "$(debug-stop)" },
+      { "command": "handoff.delete", "title": "Delete", "category": "Handoff", "icon": "$(trash)" },
+      { "command": "handoff.startDaemon", "title": "Start the Reminder Daemon", "category": "Handoff" }
     ],
     "keybindings": [
-      {
-        "command": "handoff.remindProject",
-        "key": "alt+cmd+r",
-        "mac": "alt+cmd+r",
-        "win": "ctrl+alt+r",
-        "linux": "ctrl+alt+r"
-      }
+      { "command": "handoff.remindProject", "key": "alt+cmd+r", "mac": "alt+cmd+r", "win": "ctrl+alt+r", "linux": "ctrl+alt+r" }
     ],
     "views": {
       "explorer": [
-        {
-          "id": "handoff.tree",
-          "name": "Handoffs",
-          "icon": "$(bell)",
-          "contextualTitle": "Handoffs",
-          "visibility": "collapsed"
-        }
+        { "id": "handoff.tree", "name": "Handoffs", "icon": "$(bell)", "contextualTitle": "Handoffs", "visibility": "collapsed" }
       ]
     },
     "viewsWelcome": [
       {
         "view": "handoff.tree",
-        "contents": "The reminder daemon isn't running.\n[Start it](command:handoff.startDaemon)\n\nIt runs `handoff daemon install` \u2014 install the CLI first: [README](https://github.com/davidsparrow/reminder-router#install).",
+        "contents": "The reminder daemon isn't running.\n[Start it](command:handoff.startDaemon)\n\nIt runs `handoff daemon install` — install the CLI first: [README](https://github.com/davidsparrow/reminder-router#install).",
         "when": "handoff.daemonDown"
       },
       {
         "view": "handoff.tree",
-        "contents": "Nothing waiting. Press \u2325\u2318R to remind yourself about this project.\n[New Handoff](command:handoff.remindProject)",
+        "contents": "Nothing waiting. Press ⌥⌘R to remind yourself about this project.\n[New Handoff](command:handoff.remindProject)",
         "when": "!handoff.daemonDown && handoff.empty"
       }
     ],
     "menus": {
       "view/title": [
-        {
-          "command": "handoff.remindProject",
-          "when": "view == handoff.tree",
-          "group": "navigation@1"
-        },
-        {
-          "command": "handoff.refresh",
-          "when": "view == handoff.tree",
-          "group": "navigation@2"
-        },
-        {
-          "command": "handoff.openInbox",
-          "when": "view == handoff.tree",
-          "group": "navigation@3"
-        }
+        { "command": "handoff.remindProject", "when": "view == handoff.tree", "group": "navigation@1" },
+        { "command": "handoff.search", "when": "view == handoff.tree", "group": "navigation@2" },
+        { "command": "handoff.refresh", "when": "view == handoff.tree", "group": "navigation@3" },
+        { "command": "handoff.openInbox", "when": "view == handoff.tree", "group": "navigation@4" }
       ],
       "view/item/context": [
-        {
-          "command": "handoff.open",
-          "when": "view == handoff.tree && viewItem =~ /handoff/",
-          "group": "inline@1"
-        },
-        {
-          "command": "handoff.done",
-          "when": "view == handoff.tree && viewItem =~ /handoff/",
-          "group": "inline@2"
-        },
-        {
-          "command": "handoff.snooze",
-          "when": "view == handoff.tree && viewItem =~ /handoff/",
-          "group": "inline@3"
-        },
-        {
-          "command": "handoff.resumeInClaude",
-          "when": "view == handoff.tree && viewItem =~ /resumable/",
-          "group": "1_actions@1"
-        },
-        {
-          "command": "handoff.copyResumePrompt",
-          "when": "view == handoff.tree && viewItem =~ /resumable/",
-          "group": "1_actions@2"
-        },
-        {
-          "command": "handoff.details",
-          "when": "view == handoff.tree && viewItem =~ /handoff/",
-          "group": "1_actions@3"
-        },
-        {
-          "command": "handoff.delete",
-          "when": "view == handoff.tree && viewItem =~ /handoff/",
-          "group": "9_danger@1"
-        }
+        { "command": "handoff.open", "when": "view == handoff.tree && viewItem =~ /handoff/", "group": "inline@1" },
+        { "command": "handoff.done", "when": "view == handoff.tree && viewItem =~ /\\bopen\\b/", "group": "inline@2" },
+        { "command": "handoff.snooze", "when": "view == handoff.tree && viewItem =~ /\\bopen\\b/", "group": "inline@3" },
+        { "command": "handoff.reopen", "when": "view == handoff.tree && viewItem =~ /\\bclosed\\b/", "group": "inline@2" },
+        { "command": "handoff.resumeInClaude", "when": "view == handoff.tree && viewItem =~ /resumable/", "group": "1_actions@1" },
+        { "command": "handoff.copyResumePrompt", "when": "view == handoff.tree && viewItem =~ /resumable/", "group": "1_actions@2" },
+        { "command": "handoff.details", "when": "view == handoff.tree && viewItem =~ /handoff/", "group": "1_actions@3" },
+        { "command": "handoff.copyLink", "when": "view == handoff.tree && viewItem =~ /handoff/", "group": "1_actions@4" },
+        { "command": "handoff.reschedule", "when": "view == handoff.tree && viewItem =~ /\\bopen\\b/", "group": "2_edit@1" },
+        { "command": "handoff.edit", "when": "view == handoff.tree && viewItem =~ /handoff/", "group": "2_edit@2" },
+        { "command": "handoff.stopRecurring", "when": "view == handoff.tree && viewItem =~ /\\bopen\\b/ && viewItem =~ /recurring/", "group": "2_edit@3" },
+        { "command": "handoff.reopen", "when": "view == handoff.tree && viewItem =~ /\\bclosed\\b/", "group": "2_edit@4" },
+        { "command": "handoff.delete", "when": "view == handoff.tree && viewItem =~ /handoff/", "group": "9_danger@1" }
       ],
       "commandPalette": [
-        {
-          "command": "handoff.open",
-          "when": "false"
-        },
-        {
-          "command": "handoff.done",
-          "when": "false"
-        },
-        {
-          "command": "handoff.snooze",
-          "when": "false"
-        },
-        {
-          "command": "handoff.resumeInClaude",
-          "when": "false"
-        },
-        {
-          "command": "handoff.copyResumePrompt",
-          "when": "false"
-        },
-        {
-          "command": "handoff.details",
-          "when": "false"
-        },
-        {
-          "command": "handoff.delete",
-          "when": "false"
-        },
-        {
-          "command": "handoff.refresh",
-          "when": "false"
-        }
+        { "command": "handoff.open", "when": "false" },
+        { "command": "handoff.done", "when": "false" },
+        { "command": "handoff.snooze", "when": "false" },
+        { "command": "handoff.resumeInClaude", "when": "false" },
+        { "command": "handoff.copyResumePrompt", "when": "false" },
+        { "command": "handoff.copyLink", "when": "false" },
+        { "command": "handoff.details", "when": "false" },
+        { "command": "handoff.reopen", "when": "false" },
+        { "command": "handoff.stopRecurring", "when": "false" },
+        { "command": "handoff.delete", "when": "false" },
+        { "command": "handoff.refresh", "when": "false" }
       ]
     },
     "configuration": {
       "title": "Reminder Router",
       "properties": {
-        "handoff.port": {
-          "type": "number",
-          "default": 7391,
-          "description": "Port of the local reminder daemon (handoff config port)."
-        },
-        "handoff.cliPath": {
-          "type": "string",
-          "default": "handoff",
-          "description": "Path to the handoff CLI (used to start the daemon and as a fallback when it's down)."
-        },
-        "handoff.notifyInEditor": {
-          "type": "boolean",
-          "default": true,
-          "description": "Show a VS Code notification when a handoff for this workspace becomes due."
-        },
-        "handoff.showAllProjectsInTree": {
-          "type": "boolean",
-          "default": false,
-          "description": "Show handoffs from every project in the tree, not just this workspace's."
-        },
-        "handoff.claudeCommand": {
-          "type": "string",
-          "default": "claude",
-          "description": "Command used by Resume in Claude."
-        },
-        "handoff.pollSeconds": {
-          "type": "number",
-          "default": 30,
-          "description": "How often to refresh from the daemon."
-        }
+        "handoff.port": { "type": "number", "default": 7391, "description": "Port of the local reminder daemon (handoff config port)." },
+        "handoff.cliPath": { "type": "string", "default": "handoff", "description": "Path to the handoff CLI (used to start the daemon and as a fallback when it's down)." },
+        "handoff.notifyInEditor": { "type": "boolean", "default": true, "description": "Show a VS Code notification when a handoff for this workspace becomes due." },
+        "handoff.showAllProjectsInTree": { "type": "boolean", "default": false, "description": "Show handoffs from every project in the tree, not just this workspace's." },
+        "handoff.captureSelection": { "type": "boolean", "default": true, "description": "Remind Me About Current File: include the selected text (first 300 characters) as the handoff's context." },
+        "handoff.claudeCommand": { "type": "string", "default": "claude", "description": "Command used by Resume in Claude." },
+        "handoff.pollSeconds": { "type": "number", "default": 30, "description": "How often to refresh from the daemon." }
       }
     }
   },

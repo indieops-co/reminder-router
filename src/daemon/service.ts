@@ -8,6 +8,11 @@ import { DEFAULT_ACTIONS } from "../notify/notifier.js";
 import { effectiveDestinations, openDestination, type LaunchResult } from "../launch/launcher.js";
 import { destinationLabel } from "../core/destinations.js";
 
+/** "Open GitHub", but never "Open Open Project". */
+export function openLabel(label: string): string {
+  return /^open\b/i.test(label) ? label : `Open ${label}`;
+}
+
 export interface ServiceDeps {
   store: Store;
   notifier: Notifier;
@@ -108,8 +113,8 @@ export class HandoffService {
       id: h.id,
       title,
       subtitle,
-      body: bodyParts.join(" ").slice(0, 200) || (primary ? `Open ${destinationLabel(primary)}` : ""),
-      primary: primary ? `Open ${destinationLabel(primary)}` : "Open",
+      body: bodyParts.join(" ").slice(0, 200) || (primary ? openLabel(destinationLabel(primary)) : ""),
+      primary: primary ? openLabel(destinationLabel(primary)) : "Open",
       actions: DEFAULT_ACTIONS,
       sound: this.config.sound,
     };

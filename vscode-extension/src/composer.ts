@@ -1,8 +1,15 @@
 import * as vscode from "vscode";
 import { HandoffApi, DaemonDown, type CreateInput, type Handoff } from "./api";
-import { capture, activeFile, activeTerminal } from "./capture";
+import { capture, activeFile, activeTerminal, selectedText } from "./capture";
 
 export type ComposerMode = "project" | "file" | "terminal" | "url";
+
+/** Values a deep link (or another command) hands the composer. The human still confirms. */
+export interface Prefill {
+  title?: string;
+  when?: string;
+  url?: string;
+}
 
 const PRESETS: Array<{ label: string; when: string; detail?: string }> = [
   { label: "$(watch) In 30 minutes", when: "in 30m" },
@@ -28,7 +35,7 @@ function debounce<T extends (...a: any[]) => void>(fn: T, ms: number): T {
  * Two-step composer: title (a trailing time phrase is understood and previewed live),
  * then — only if no time was typed — a quick pick of presets that also accepts free text.
  */
-export async function compose(api: HandoffApi, mode: ComposerMode = "project"): Promise<Handoff | null> {
+export async function compose(api: HandoffApi, mode: ComposerMode = "project", prefill: Prefill = {}): Promise<Handoff | null> {
   const cap = capture();
   let url: string | undefined;
   if (mode === "url") {
@@ -36,9 +43,11 @@ export async function compose(api: HandoffApi, mode: ComposerMode = "project"): 
       title: "Handoff · destination URL",
       prompt: "Where should the reminder take you? (GitHub PR, Vercel, Stripe, docs…)",
       placeHolder: "https://",
+      value: prefill.url,
       validateInput: (v) => (/^https?:\/\/\S+$/i.test(v.trim()) ? null : "Enter a full http(s) URL"),
     });
     if (!url) return null;
+    url = url.trim();
   }
 
   const subject =
@@ -83,6 +92,11 @@ export async function compose(api: HandoffApi, mode: ComposerMode = "project"): 
       box.hide();
     });
     box.onDidHide(() => { box.dispose(); if (!accepted) resolve(null); });
+    const initial = [prefill.title, prefill.when].filter(Boolean).join(" ").trim();
+    if (initial) {
+      box.value = initial;
+      preview(initial); // setting .value doesn't fire onDidChangeValue
+    }
     box.show();
   });
   if (!step1) return null;
@@ -102,6 +116,8 @@ export async function compose(api: HandoffApi, mode: ComposerMode = "project"): 
   if (mode === "file") {
     const f = activeFile();
     if (f) input.currentFile = f.file;
+    const sel = vscode.workspace.getConfiguration("handoff").get<boolean>("captureSelection", true) ? selectedText() : null;
+    if (sel) input.context = `Selected ${sel.where}:\n${sel.text}`;
   }
   if (mode === "terminal") {
     const t = activeTerminal();
@@ -119,10 +135,11 @@ export async function compose(api: HandoffApi, mode: ComposerMode = "project"): 
   }
 }
 
-async function pickWhen(api: HandoffApi): Promise<string | undefined> {
+/** Preset quick pick that also accepts free text, with a live parse of what you type. */
+export async function pickWhen(api: HandoffApi, title = "When?"): Promise<string | undefined> {
   return new Promise((resolve) => {
     const qp = vscode.window.createQuickPick<vscode.QuickPickItem & { when?: string }>();
-    qp.title = "When?";
+    qp.title = title;
     qp.placeholder = "Pick one, or type: \"tomorrow 10am\", \"friday at 3\", \"in 45m\", \"first business day of every month\"";
     qp.matchOnDescription = true;
     const base = PRESETS.map((p) => ({ label: p.label, when: p.when, description: p.when }));
@@ -158,6 +175,7 @@ async function createViaCli(api: HandoffApi, input: CreateInput): Promise<Handof
   if (input.every) args.push("--every", input.every); else if (input.when) args.push("--at", input.when);
   if (input.repoPath) args.push("--path", input.repoPath); else args.push("--no-capture");
   if (input.currentFile) args.push("--file", input.currentFile.replace(/:\d+(?::\d+)?$/, ""));
+  if (input.context) args.push("--context", input.context);
   for (const d of input.destinations ?? []) {
     if (d.type === "url") args.push("--url", d.uri);
     else if (d.type === "terminal") args.push("--terminal");

@@ -19,8 +19,11 @@ export interface Handoff {
   current_file: string | null;
   source_session_id: string | null;
   agent_type: string | null;
+  completed_at: string | null;
   project: { id: number; code: string; name: string; path: string | null } | null;
   actions: Array<{ index: number; type: string; uri: string; label: string; command?: string }>;
+  /** vscode://indieops.reminder-router/handoff/<id> when the daemon sees the extension installed. */
+  deep_link?: string | null;
 }
 
 export interface Inbox {
@@ -57,6 +60,15 @@ export interface CreateInput {
   resumePrompt?: string;
   capture?: boolean;
   source?: string;
+}
+
+export interface ListParams {
+  /** "open" (default) | "all" | comma-separated statuses ("due,snoozed"). */
+  status?: string;
+  q?: string;
+  project?: string;
+  limit?: number;
+  recurring?: boolean;
 }
 
 function cfg<T>(key: string, fallback: T): T {
@@ -118,6 +130,16 @@ export class HandoffApi {
     return this.call("GET", "/now");
   }
 
+  list(params: ListParams = {}): Promise<Handoff[]> {
+    const q = new URLSearchParams();
+    q.set("status", params.status ?? "open");
+    if (params.q) q.set("q", params.q);
+    if (params.project) q.set("project", params.project);
+    if (params.limit) q.set("limit", String(params.limit));
+    if (params.recurring) q.set("recurring", "1");
+    return this.call("GET", `/handoffs?${q.toString()}`);
+  }
+
   get(id: number): Promise<Handoff> {
     return this.call("GET", `/handoffs/${id}`);
   }
@@ -144,6 +166,19 @@ export class HandoffApi {
 
   open(id: number, index = 0) {
     return this.call<{ message: string; launch: { ok: boolean; message: string } | null }>("POST", `/handoffs/${id}/open`, { index });
+  }
+
+  reschedule(id: number, when: string): Promise<Handoff> {
+    return this.call("POST", `/handoffs/${id}/reschedule`, { when });
+  }
+
+  reopen(id: number): Promise<Handoff> {
+    return this.call("POST", `/handoffs/${id}/reopen`);
+  }
+
+  /** End a recurring handoff for good. */
+  stop(id: number): Promise<Handoff> {
+    return this.call("POST", `/handoffs/${id}/stop`);
   }
 
   delete(id: number) {

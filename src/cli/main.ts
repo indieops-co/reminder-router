@@ -550,7 +550,7 @@ program
   .action(async () => {
     if (!(await daemonUp())) fail("Daemon isn't running.");
     const r = await apiClient().post("/test-notification");
-    out(r, `${green("✓")} sent via ${r.notifier}\n${dim("No banner? Check Notification Center (click the clock), Focus mode, and set System Settings › Notifications › Handoff to \"Alerts\" so reminders stay up until you act.")}`);
+    out(r, `${green("✓")} sent via ${r.notifier}\n${dim("It shows up as a card in the top-right corner of the screen; Snooze / Done are under its Options ▾ menu. No card? Check Notification Center (click the clock) and Focus, and set System Settings › Notifications › Handoff to \"Persistent\" (\"Alerts\" before macOS 26) so reminders stay up until you act.")}`);
   });
 
 program

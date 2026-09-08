@@ -12,18 +12,32 @@ class SectionNode extends vscode.TreeItem {
   }
 }
 
+export function isClosed(h: Handoff): boolean {
+  return h.status === "completed" || h.status === "dismissed";
+}
+
 export class HandoffNode extends vscode.TreeItem {
   constructor(public readonly handoff: Handoff, showProject: boolean) {
     super(handoff.title, vscode.TreeItemCollapsibleState.None);
     const h = handoff;
+    const closed = isClosed(h);
     const proj = showProject && h.project ? `${h.project.name} · ` : "";
-    this.description = `${proj}${h.status === "due" ? "due " : ""}${h.when_label}${h.recurrence_label ? " ↻" : ""}${h.status === "snoozed" ? " (snoozed)" : ""}`;
+    this.description = closed
+      ? `${proj}${h.status}${h.completed_at ? " " + new Date(h.completed_at).toLocaleDateString([], { month: "short", day: "numeric" }) : ""}`
+      : `${proj}${h.status === "due" ? "due " : ""}${h.when_label}${h.recurrence_label ? " ↻" : ""}${h.status === "snoozed" ? " (snoozed)" : ""}`;
     this.id = `handoff-${h.id}`;
-    this.iconPath = new vscode.ThemeIcon(
-      h.status === "due" ? "circle-filled" : "circle-outline",
-      new vscode.ThemeColor(h.status === "due" ? "charts.red" : soon(h) ? "charts.orange" : "charts.green"),
-    );
-    this.contextValue = "handoff" + (h.resume_prompt || h.source_session_id ? " resumable" : "");
+    this.iconPath = closed
+      ? new vscode.ThemeIcon(h.status === "completed" ? "pass" : "circle-slash", new vscode.ThemeColor("disabledForeground"))
+      : new vscode.ThemeIcon(
+          h.status === "due" ? "circle-filled" : "circle-outline",
+          new vscode.ThemeColor(h.status === "due" ? "charts.red" : soon(h) ? "charts.orange" : "charts.green"),
+        );
+    // Space-separated flags the menus match with `viewItem =~ /\bopen\b/` etc.
+    const flags = ["handoff", closed ? "closed" : "open"];
+    if (h.resume_prompt || h.source_session_id) flags.push("resumable");
+    if (h.recurrence_label) flags.push("recurring");
+    if (h.status === "due") flags.push("due");
+    this.contextValue = flags.join(" ");
     this.tooltip = tooltip(h);
     this.command = { command: "handoff.details", title: "Show", arguments: [this] };
   }
@@ -78,8 +92,8 @@ export class HandoffTree implements vscode.TreeDataProvider<Node> {
 
   getChildren(el?: Node): Node[] {
     if (!this.inbox) return [];
+    const showProject = !this.projectId;
     if (!el) {
-      const showProject = !this.projectId;
       const sections: SectionNode[] = [
         new SectionNode("due", "Due now", this.inbox.due),
         new SectionNode("today", "Today", this.inbox.today),
@@ -88,14 +102,9 @@ export class HandoffTree implements vscode.TreeDataProvider<Node> {
         new SectionNode("recurring", "Recurring", this.inbox.recurring),
         new SectionNode("completed", "Completed", this.inbox.completed.slice(0, 8)),
       ];
-      (sections as any).showProject = showProject;
       return sections.filter((s) => s.items.length > 0 || s.key === "due");
     }
-    if (el instanceof SectionNode) {
-      const showProject = !this.projectId;
-      const items = el.key === "completed" ? el.items : el.items;
-      return items.map((h) => new HandoffNode(h, showProject));
-    }
+    if (el instanceof SectionNode) return el.items.map((h) => new HandoffNode(h, showProject));
     return [];
   }
 }

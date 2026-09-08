@@ -69,15 +69,40 @@ export async function installLaunchAgent(): Promise<string> {
   const p = plistPath();
   fs.mkdirSync(path.dirname(p), { recursive: true });
   fs.writeFileSync(p, renderPlist());
-  // Replace any existing instance.
+  // Replace any existing instance. bootout is asynchronous: bootstrapping before the old
+  // service is fully gone fails with "Input/output error", so wait for it, then retry.
   try {
     await execFileP("launchctl", ["bootout", `${domain()}/${LAUNCHD_LABEL}`]);
   } catch {
     /* not loaded */
   }
-  await execFileP("launchctl", ["bootstrap", domain(), p]);
+  for (let i = 0; i < 40 && (await launchAgentLoaded()); i++) await sleep(250);
+  let lastErr: unknown = null;
+  for (let attempt = 0; attempt < 8; attempt++) {
+    try {
+      await execFileP("launchctl", ["bootstrap", domain(), p]);
+      lastErr = null;
+      break;
+    } catch (err) {
+      lastErr = err;
+      await sleep(500);
+    }
+  }
+  if (lastErr) throw new Error(`launchctl bootstrap failed: ${(lastErr as Error).message.trim()}`);
   await execFileP("launchctl", ["enable", `${domain()}/${LAUNCHD_LABEL}`]).catch(() => undefined);
   return p;
+}
+
+const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+
+/** True while launchd still knows the service (loaded, running or being torn down). */
+async function launchAgentLoaded(): Promise<boolean> {
+  try {
+    await execFileP("launchctl", ["print", `${domain()}/${LAUNCHD_LABEL}`]);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export async function uninstallLaunchAgent(): Promise<void> {
@@ -96,6 +121,14 @@ export async function uninstallLaunchAgent(): Promise<void> {
 
 export async function restartLaunchAgent(): Promise<void> {
   if (process.platform !== "darwin") return;
+  // A plist written by an older version (different node path, missing env such as
+  // HANDOFF_LAUNCHD) is refreshed on restart, so upgrades never need a reinstall.
+  const p = plistPath();
+  const current = fs.existsSync(p) ? fs.readFileSync(p, "utf8") : "";
+  if (current !== renderPlist()) {
+    await installLaunchAgent();
+    return;
+  }
   await execFileP("launchctl", ["kickstart", "-k", `${domain()}/${LAUNCHD_LABEL}`]);
 }
 
