@@ -47,7 +47,7 @@ handoff daemon restart
 handoff test-notify        # you should see a notification with buttons
 ```
 
-The first notification will ask you to allow notifications for **Handoff** — say yes. If you skip `build-notifier`, notifications still work through `terminal-notifier` (`brew install terminal-notifier`) or plain `osascript`, just without buttons.
+The first notification will ask you to allow notifications for **Handoff** — say yes. Then set System Settings › Notifications › Handoff to alert style **Alerts** so a reminder stays on screen until you Snooze or Done it (Banners vanish after five seconds), and add Handoff to any Focus mode you use. Every delivered reminder is also in Notification Center (click the clock). If you skip `build-notifier`, notifications still work through `terminal-notifier` (`brew install terminal-notifier`) or plain `osascript`, just without buttons.
 
 Everything lives in `~/.handoff/` (`handoff.db`, `config.json`, `daemon.log`, `bin/HandoffNotify.app`). Set `HANDOFF_HOME` to move it.
 

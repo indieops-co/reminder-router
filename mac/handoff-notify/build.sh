@@ -20,10 +20,15 @@ rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$BUILD/HandoffNotify" "$APP/Contents/MacOS/HandoffNotify"
 cp "$HERE/Info.plist" "$APP/Contents/Info.plist"
+cp "$HERE/AppIcon.icns" "$APP/Contents/Resources/AppIcon.icns"
 printf 'APPL????' > "$APP/Contents/PkgInfo"
 
 # Ad-hoc signature: UNUserNotificationCenter refuses unsigned bundles.
 codesign --force --sign - "$APP" >/dev/null 2>&1 || echo "warning: codesign failed (notifications may not work)" >&2
 
+# Make sure Launch Services knows the bundle (icon, notification identity).
+/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -f "$APP" >/dev/null 2>&1 || true
+
 echo "built $APP"
 echo "Now: handoff daemon restart   (then: handoff test-notify)"
+echo "Tip: System Settings › Notifications › Handoff › alert style \"Alerts\" keeps reminders on screen until you act."

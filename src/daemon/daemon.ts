@@ -71,7 +71,8 @@ export function pidAlive(pid: number): boolean {
 
 export async function runDaemon(opts: { foreground?: boolean } = {}): Promise<void> {
   const cfg = loadConfig(true);
-  const log = makeLogger(true);
+  // Under launchd stdout already goes to daemon.log, so don't also append to it.
+  const log = makeLogger(!process.env.HANDOFF_LAUNCHD);
   const version = packageVersion();
 
   const existing = readDaemonState();

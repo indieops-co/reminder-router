@@ -550,7 +550,7 @@ program
   .action(async () => {
     if (!(await daemonUp())) fail("Daemon isn't running.");
     const r = await apiClient().post("/test-notification");
-    out(r, `${green("✓")} sent via ${r.notifier}`);
+    out(r, `${green("✓")} sent via ${r.notifier}\n${dim("No banner? Check Notification Center (click the clock), Focus mode, and set System Settings › Notifications › Handoff to \"Alerts\" so reminders stay up until you act.")}`);
   });
 
 program

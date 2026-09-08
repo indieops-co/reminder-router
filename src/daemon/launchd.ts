@@ -52,6 +52,7 @@ export function renderPlist(): string {
   <dict>
     <key>PATH</key><string>${xml(pathEnv)}</string>
     <key>HOME</key><string>${xml(os.homedir())}</string>
+    <key>HANDOFF_LAUNCHD</key><string>1</string>
     ${process.env.HANDOFF_HOME ? `<key>HANDOFF_HOME</key><string>${xml(process.env.HANDOFF_HOME)}</string>` : ""}
   </dict>
 </dict>
