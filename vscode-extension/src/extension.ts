@@ -257,7 +257,7 @@ async function showDue(): Promise<void> {
   if (!up) {
     const pick = await vscode.window.showWarningMessage("The reminder daemon isn't running.", "Start daemon", "Install instructions");
     if (pick === "Start daemon") await startDaemon();
-    else if (pick) vscode.env.openExternal(vscode.Uri.parse("https://github.com/davidsparrow/reminder-router#install"));
+    else if (pick) vscode.env.openExternal(vscode.Uri.parse("https://github.com/indieops-co/reminder-router#install"));
     return;
   }
   const due = await api.due();

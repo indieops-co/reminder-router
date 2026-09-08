@@ -37,7 +37,7 @@ fi
 if command -v claude >/dev/null 2>&1; then
   echo
   echo "▸ Claude Code found. Install the plugin from inside Claude Code:"
-  echo "    /plugin marketplace add davidsparrow/reminder-router"
+  echo "    /plugin marketplace add indieops-co/reminder-router"
   echo "    /plugin install reminder-router@reminder-router"
   echo "  (or try it without installing:  claude --plugin-dir $(pwd)/claude-plugin)"
 fi

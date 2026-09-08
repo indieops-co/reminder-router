@@ -1,6 +1,6 @@
 # Reminder Router — Handoffs (VS Code)
 
-Reminders that take you back to the work. This extension is the editor surface for [Reminder Router](https://github.com/davidsparrow/reminder-router): create a context-aware **handoff** for the project, file or terminal you're in, see what's due, and jump back with one click.
+Reminders that take you back to the work. This extension is the editor surface for [Reminder Router](https://github.com/indieops-co/reminder-router): create a context-aware **handoff** for the project, file or terminal you're in, see what's due, and jump back with one click.
 
 It talks to the local `handoff` daemon on `127.0.0.1:7391` — nothing leaves your machine. Install the CLI first (see the main README), then this extension.
 

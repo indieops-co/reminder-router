@@ -2,9 +2,9 @@
   "name": "reminder-router",
   "description": "Context-aware handoff reminders: /remind creates a reminder that brings you back to this exact work; MCP tools let Claude create, list, resume and complete handoffs; a SessionStart hook surfaces what's waiting in this project.",
   "version": "0.2.0",
-  "author": { "name": "Robbie (IndieOps)", "url": "https://github.com/davidsparrow/reminder-router" },
-  "homepage": "https://github.com/davidsparrow/reminder-router",
-  "repository": "https://github.com/davidsparrow/reminder-router",
+  "author": { "name": "IndieOps", "url": "https://github.com/indieops-co/reminder-router" },
+  "homepage": "https://github.com/indieops-co/reminder-router",
+  "repository": "https://github.com/indieops-co/reminder-router",
   "license": "MIT",
   "keywords": ["reminders", "handoff", "attention", "context"]
 }

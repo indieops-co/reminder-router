@@ -1,6 +1,6 @@
 {
   "name": "reminder-router",
-  "owner": { "name": "Robbie (IndieOps)", "url": "https://github.com/davidsparrow" },
+  "owner": { "name": "IndieOps", "url": "https://github.com/indieops-co" },
   "metadata": { "description": "Reminder Router — reminders that take you back to the work." },
   "plugins": [
     {

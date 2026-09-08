@@ -36,7 +36,7 @@ Tomorrow at 10:00 a native notification appears — *acme-auth · finish OAuth b
 Requires macOS and Node.js ≥ 22.13 (`node --version`).
 
 ```bash
-git clone https://github.com/davidsparrow/reminder-router.git
+git clone https://github.com/indieops-co/reminder-router.git
 cd reminder-router
 npm install          # builds dist/
 npm link             # puts `handoff` on your PATH
@@ -106,7 +106,7 @@ code --install-extension ../reminder-router-vscode.vsix    # or cursor / windsur
 Reminder Router ships as a Claude Code **plugin** (`claude-plugin/`): two skills, an MCP server, and a session-start hook.
 
 ```
-/plugin marketplace add davidsparrow/reminder-router
+/plugin marketplace add indieops-co/reminder-router
 /plugin install reminder-router@reminder-router
 ```
 
@@ -187,7 +187,7 @@ src/mcp      MCP server (13 tools) · Claude Code hook handlers
 vscode-extension     VS Code/Cursor extension (composer · capture · tree · status bar · alerts) → .vsix
 mac/handoff-notify   main.swift · Info.plist · build.sh
 claude-plugin        Claude Code plugin: skills/remind · skills/handoffs · hooks · .mcp.json
-.claude-plugin/marketplace.json   lets `/plugin marketplace add davidsparrow/reminder-router` find it
+.claude-plugin/marketplace.json   lets `/plugin marketplace add indieops-co/reminder-router` find it
 claude-code  standalone /remind command (no plugin)
 ```
 

@@ -7,10 +7,10 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/davidsparrow/reminder-router.git",
+    "url": "https://github.com/indieops-co/reminder-router.git",
     "directory": "vscode-extension"
   },
-  "homepage": "https://github.com/davidsparrow/reminder-router",
+  "homepage": "https://github.com/indieops-co/reminder-router",
   "engines": {
     "vscode": "^1.90.0"
   },
@@ -65,7 +65,7 @@
     "viewsWelcome": [
       {
         "view": "handoff.tree",
-        "contents": "The reminder daemon isn't running.\n[Start it](command:handoff.startDaemon)\n\nIt runs `handoff daemon install` — install the CLI first: [README](https://github.com/davidsparrow/reminder-router#install).",
+        "contents": "The reminder daemon isn't running.\n[Start it](command:handoff.startDaemon)\n\nIt runs `handoff daemon install` — install the CLI first: [README](https://github.com/indieops-co/reminder-router#install).",
         "when": "handoff.daemonDown"
       },
       {

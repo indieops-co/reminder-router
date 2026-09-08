@@ -191,7 +191,7 @@ async function createViaCli(api: HandoffApi, input: CreateInput): Promise<Handof
     return h;
   } catch (err) {
     vscode.window.showErrorMessage(`Handoff: couldn't reach the daemon or the \`handoff\` CLI (${(err as Error).message}).`, "Install instructions").then((c) => {
-      if (c) vscode.env.openExternal(vscode.Uri.parse("https://github.com/davidsparrow/reminder-router#install"));
+      if (c) vscode.env.openExternal(vscode.Uri.parse("https://github.com/indieops-co/reminder-router#install"));
     });
     return null;
   }
